@@ -1,0 +1,48 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+use IEEE.NUMERIC_STD.ALL;
+
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx leaf cells in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+
+entity Prescaler is
+    generic ( N_BITS : integer;
+              VAL_DIV : integer );
+             
+       Port ( rst     : in STD_LOGIC;
+              clk_in  : in STD_LOGIC; 
+              clk_out : out STD_LOGIC); 
+end Prescaler;
+
+architecture Behavioral of Prescaler is
+
+    signal cuenta_actual       : unsigned ((N_BITS - 1) downto 0) := (others => '0'); 
+    signal fin_cuenta, clk_div : std_logic := '1';
+    signal test_1   : std_logic_vector ((N_BITS - 1) downto 0); 
+    constant val_fc : integer := VAL_DIV / 2; -- valor de fin de cueta
+    
+begin
+    P_conta: process (clk_in, rst)
+    begin
+        if rst = '0' then
+            cuenta_actual <= (others => '0');
+        elsif rising_edge(clk_in) then
+           if fin_cuenta = '1' then
+                cuenta_actual <= (others => '0'); 
+                clk_div <= not clk_div; -- final de cuenta
+            else 
+                cuenta_actual <= cuenta_actual + 1; 
+           end if;
+        end if;
+    end process;
+    
+    fin_cuenta <= '1' when cuenta_actual = (val_fc - 1) else '0'; 
+    
+    test_1  <= std_logic_vector(cuenta_actual);
+    clk_out <= clk_div;
+end Behavioral;
