@@ -1,0 +1,61 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+use IEEE.NUMERIC_STD.ALL;
+
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx leaf cells in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+
+entity Shift_Register is
+    Generic ( SHIFT_ANCHO : integer; -- nbits para shifts
+              N_Bits_D    : integer; 
+              N_BITS_SPI  : integer ); 
+              
+       Port ( -- ENTRADAS
+              clk    : in STD_LOGIC; 
+              in_D1  : in STD_LOGIC_VECTOR ((N_Bits_D - 1) downto 0); 
+              LoadData : in STD_LOGIC; 
+              en_Sft : in STD_LOGIC;
+               
+              -- SALIDAS
+              out_D1      : out STD_LOGIC; 
+              Sft_Counter : out STD_LOGIC_VECTOR ((SHIFT_ANCHO - 1) downto 0)); 
+end Shift_Register;
+
+architecture Behavioral of Shift_Register is
+
+    --SEÑALES
+    signal SPI_out1 : STD_LOGIC_VECTOR((N_BITS_SPI - 1) downto 0); -- señal de 16 bits 
+    signal counter : unsigned((SHIFT_ANCHO - 1)  downto 0) := (others => '0'); -- contador del número de veces que se desplaza un registro
+    
+    signal i : integer := 0;
+
+begin
+
+    IDLE: process (clk)
+    begin
+        if rising_edge(clk) then 
+            if LoadData = '1' then -- carga el dato de entrada
+                SPI_out1((N_BITS_SPI - 1) downto N_Bits_D) <= (others => '0');
+                SPI_out1((N_Bits_D - 1) downto 0) <= in_D1;
+                
+                counter <= "0000";
+            elsif en_Sft = '1' then       
+               
+                    SPI_out1((N_BITS_SPI - 1) downto 1) <= SPI_out1((N_BITS_SPI - 2) downto 0); -- desplazando el LSB
+                    SPI_out1(0) <= SPI_out1(N_BITS_SPI - 1);   
+                    
+                    counter <= counter + 1;
+            end if;
+        end if;
+    end process;
+    
+    out_D1 <= SPI_out1(N_BITS_SPI - 1); -- LSB como salida
+    
+    Sft_Counter <= STD_LOGIC_VECTOR(counter);
+    
+end Behavioral;
